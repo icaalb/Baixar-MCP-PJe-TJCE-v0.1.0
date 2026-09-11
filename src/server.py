@@ -8,7 +8,7 @@ from mcp.server.fastmcp import FastMCP
 from starlette.responses import JSONResponse
 
 import cliente_singleton
-from config import MCP_NAME, TRIBUNAL, WARMUP, normalize_grau
+from config import MCP_NAME, TRIBUNAL, VERSION, WARMUP, normalize_grau
 
 
 async def _watchdog() -> None:
@@ -40,6 +40,7 @@ def _meta(payload: dict, grau: str) -> dict:
     payload["tribunal"] = TRIBUNAL
     payload["grau"] = "2º grau" if normalize_grau(grau) == "2g" else "1º grau"
     payload["somente_leitura"] = True
+    payload["versao"] = VERSION
     return payload
 
 
@@ -51,7 +52,7 @@ async def health_http(_request):
             "ok": True,
             "service": MCP_NAME,
             "tribunal": TRIBUNAL,
-            "version": "0.2.0",
+            "version": VERSION,
             "read_only": True,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
@@ -97,7 +98,7 @@ async def ler_documento(url: str, grau: str = "2g") -> dict:
 async def encerrar_sessao() -> dict:
     """Encerra imediatamente a sessão local do navegador usada pelo MCP."""
     await cliente_singleton.close_client()
-    return {"ok": True, "tribunal": TRIBUNAL}
+    return {"ok": True, "tribunal": TRIBUNAL, "versao": VERSION}
 
 
 if __name__ == "__main__":
