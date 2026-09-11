@@ -8,7 +8,16 @@ from mcp.server.fastmcp import FastMCP
 from starlette.responses import JSONResponse
 
 import cliente_singleton
-from config import MCP_NAME, TRIBUNAL, VERSION, WARMUP, normalize_grau
+from config import (
+    MCP_HOST,
+    MCP_JSON_RESPONSE,
+    MCP_NAME,
+    MCP_PORT,
+    TRIBUNAL,
+    VERSION,
+    WARMUP,
+    normalize_grau,
+)
 
 
 async def _watchdog() -> None:
@@ -33,7 +42,15 @@ async def lifespan(_server):
         await cliente_singleton.close_client()
 
 
-mcp = FastMCP(MCP_NAME, lifespan=lifespan)
+# No MCP SDK 1.x, host/port/json_response pertencem às configurações do FastMCP,
+# não aos argumentos de run(). Mantemos o bind local para uso por túnel seguro.
+mcp = FastMCP(
+    MCP_NAME,
+    lifespan=lifespan,
+    host=MCP_HOST,
+    port=MCP_PORT,
+    json_response=MCP_JSON_RESPONSE,
+)
 
 
 def _meta(payload: dict, grau: str) -> dict:
