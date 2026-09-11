@@ -1,0 +1,28 @@
+{
+  "name": "pje-tjce",
+  "version": "0.1.0",
+  "description": "Plugin de consulta somente leitura ao PJe-TJCE, com ferramentas MCP para processos, movimentações e documentos.",
+  "author": {
+    "name": "JurisIA"
+  },
+  "homepage": "https://github.com/icaalb/Baixar-MCP-PJe-TJCE-v0.1.0",
+  "repository": "https://github.com/icaalb/Baixar-MCP-PJe-TJCE-v0.1.0",
+  "keywords": ["pje", "tjce", "juridico", "mpce", "processo-judicial", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "PJe-TJCE",
+    "shortDescription": "Consulta assistida ao PJe do TJCE",
+    "longDescription": "Consulta processos, movimentações e documentos do PJe-TJCE por meio de ferramentas MCP somente de leitura. O plugin não protocola, não assina, não registra ciência e não pratica atos processuais.",
+    "developerName": "JurisIA",
+    "category": "Productivity",
+    "capabilities": [],
+    "websiteURL": "https://github.com/icaalb/Baixar-MCP-PJe-TJCE-v0.1.0",
+    "defaultPrompt": [
+      "Consulte este processo no PJe-TJCE.",
+      "Liste as últimas movimentações do processo.",
+      "Liste os documentos disponíveis nos autos."
+    ],
+    "brandColor": "#17365D"
+  }
+}
