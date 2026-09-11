@@ -138,7 +138,7 @@ exit /b %errorlevel%
 cls
 echo ============================================================
 echo   PYTHON NAO ENCONTRADO
-necho ============================================================
+echo ============================================================
 echo.
 echo O Windows nao encontrou uma instalacao real do Python 3.10 ou superior.
 echo O comando "python" pode estar apontando apenas para o atalho da Microsoft Store.
@@ -150,20 +150,20 @@ echo    Durante a instalacao, marque: Add python.exe to PATH
 echo.
 echo 2. Se o Windows continuar abrindo a Microsoft Store, abra:
 echo    Configuracoes ^> Aplicativos ^> Configuracoes avancadas de aplicativos
-necho    ^> Aliases de execucao do aplicativo
-necho.
+echo    ^> Aliases de execucao do aplicativo
+echo.
 echo 3. Desative os aliases:
 echo       python.exe
-necho       python3.exe
-necho.
+echo       python3.exe
+echo.
 echo 4. Feche esta janela, abra outra e teste:
 echo       py --version
-necho    ou:
+echo    ou:
 echo       python --version
-necho.
+echo.
 echo 5. Quando aparecer "Python 3.10" ou superior, execute novamente:
 echo       CONFIGURAR-PJE-CHATGPT.bat
-necho.
+echo.
 echo O configurador nao altera essas configuracoes automaticamente por seguranca.
 echo.
 pause
