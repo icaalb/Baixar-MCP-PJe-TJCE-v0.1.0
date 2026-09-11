@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from mcp.server.fastmcp import FastMCP
+from starlette.responses import JSONResponse
 
 import cliente_singleton
 from config import MCP_NAME, TRIBUNAL, WARMUP, normalize_grau
@@ -39,6 +41,21 @@ def _meta(payload: dict, grau: str) -> dict:
     payload["grau"] = "2º grau" if normalize_grau(grau) == "2g" else "1º grau"
     payload["somente_leitura"] = True
     return payload
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_http(_request):
+    """Health check HTTP sem abrir sessão no PJe."""
+    return JSONResponse(
+        {
+            "ok": True,
+            "service": MCP_NAME,
+            "tribunal": TRIBUNAL,
+            "version": "0.2.0",
+            "read_only": True,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
 
 @mcp.tool()
