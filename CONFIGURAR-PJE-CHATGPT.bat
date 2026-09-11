@@ -4,6 +4,7 @@ cd /d "%~dp0"
 title Configurar MCP PJe-TJCE para ChatGPT
 
 set "PYTHON_CMD="
+set "PYTHON_EXE="
 
 rem ============================================================
 rem Detectar Python real
@@ -23,6 +24,7 @@ if not defined PYTHON_CMD (
   )
 )
 
+rem Procurar caminhos comuns
 if not defined PYTHON_CMD (
   for %%P in (
     "%LocalAppData%\Programs\Python\Python313\python.exe"
@@ -41,37 +43,82 @@ if not defined PYTHON_CMD (
   )
 )
 
+rem Procurar no Registro do Windows (HKCU/HKLM, 64 e 32 bits)
+if not defined PYTHON_CMD (
+  for %%K in (
+    "HKCU\Software\Python\PythonCore\3.13\InstallPath"
+    "HKCU\Software\Python\PythonCore\3.12\InstallPath"
+    "HKCU\Software\Python\PythonCore\3.11\InstallPath"
+    "HKCU\Software\Python\PythonCore\3.10\InstallPath"
+    "HKLM\Software\Python\PythonCore\3.13\InstallPath"
+    "HKLM\Software\Python\PythonCore\3.12\InstallPath"
+    "HKLM\Software\Python\PythonCore\3.11\InstallPath"
+    "HKLM\Software\Python\PythonCore\3.10\InstallPath"
+    "HKLM\Software\WOW6432Node\Python\PythonCore\3.13\InstallPath"
+    "HKLM\Software\WOW6432Node\Python\PythonCore\3.12\InstallPath"
+    "HKLM\Software\WOW6432Node\Python\PythonCore\3.11\InstallPath"
+    "HKLM\Software\WOW6432Node\Python\PythonCore\3.10\InstallPath"
+  ) do (
+    if not defined PYTHON_CMD (
+      for /f "tokens=2,*" %%A in ('reg query %%~K /ve 2^>nul ^| findstr /I "REG_SZ"') do (
+        set "PYTHON_EXE=%%Bpython.exe"
+        if exist "!PYTHON_EXE!" (
+          "!PYTHON_EXE!" -c "import sys; print(sys.executable)" >nul 2>nul
+          if not errorlevel 1 set "PYTHON_CMD="!PYTHON_EXE!""
+        )
+      )
+    )
+  )
+)
+
 rem ============================================================
-rem Se Python nao existir, oferecer instalacao automatica via winget
+rem Se Python nao existir, tentar winget / reparar instalacao registrada
 rem ============================================================
 
 if not defined PYTHON_CMD (
   cls
   echo ============================================================
-  echo   PYTHON NAO ENCONTRADO
+  echo   PYTHON NAO LOCALIZADO
   echo ============================================================
   echo.
-  echo O Windows nao encontrou uma instalacao real do Python 3.10 ou superior.
+  echo O Windows nao encontrou um executavel funcional do Python 3.10 ou superior.
   echo.
   where winget >nul 2>nul
   if not errorlevel 1 (
-    echo O Windows Package Manager ^(winget^) esta disponivel.
-    echo Posso instalar o Python 3.12 somente para o usuario atual.
-    echo Essa instalacao nao altera politicas institucionais do Windows.
-    echo.
-    choice /C SN /N /M "Deseja instalar o Python 3.12 agora? [S/N]: "
-    if errorlevel 2 (
+    winget list --id Python.Python.3.12 -e >nul 2>nul
+    if not errorlevel 1 (
+      echo O winget informa que o Python 3.12 JA ESTA INSTALADO,
+      echo mas o executavel nao foi localizado. Isso indica uma instalacao quebrada,
+      echo PATH incorreto ou registro inconsistente.
       echo.
-      echo Instalacao cancelada pelo usuario.
-    ) else (
-      echo.
-      echo Instalando Python 3.12...
-      winget install --id Python.Python.3.12 -e --scope user --accept-package-agreements --accept-source-agreements
-      if not errorlevel 1 (
-        if exist "%LocalAppData%\Programs\Python\Python312\python.exe" (
-          set "PYTHON_CMD="%LocalAppData%\Programs\Python\Python312\python.exe""
-        )
+      choice /C SN /N /M "Deseja REPARAR reinstalando o Python 3.12 para o usuario atual? [S/N]: "
+      if errorlevel 2 (
+        echo.
+        echo Reparo cancelado.
+      ) else (
+        echo.
+        echo Removendo o registro/instalacao atual do Python 3.12...
+        winget uninstall --id Python.Python.3.12 -e --scope user --silent
+        echo.
+        echo Instalando novamente o Python 3.12...
+        winget install --id Python.Python.3.12 -e --scope user --accept-package-agreements --accept-source-agreements --silent
       )
+    ) else (
+      echo O Python 3.12 nao esta instalado pelo winget.
+      echo.
+      choice /C SN /N /M "Deseja instalar o Python 3.12 agora? [S/N]: "
+      if errorlevel 2 (
+        echo.
+        echo Instalacao cancelada.
+      ) else (
+        winget install --id Python.Python.3.12 -e --scope user --accept-package-agreements --accept-source-agreements --silent
+      )
+    )
+
+    rem Redetectar apos instalar/reparar
+    if exist "%LocalAppData%\Programs\Python\Python312\python.exe" (
+      "%LocalAppData%\Programs\Python\Python312\python.exe" -c "import sys; print(sys.executable)" >nul 2>nul
+      if not errorlevel 1 set "PYTHON_CMD="%LocalAppData%\Programs\Python\Python312\python.exe""
     )
   ) else (
     echo O winget nao esta disponivel neste computador.
@@ -81,27 +128,25 @@ if not defined PYTHON_CMD (
 if not defined PYTHON_CMD (
   echo.
   echo ============================================================
-  echo   INSTALACAO MANUAL NECESSARIA
+  echo   ACAO MANUAL NECESSARIA
   echo ============================================================
   echo.
-  echo 1. Instale o Python 3.12 ou superior pelo instalador oficial.
-  echo    Durante a instalacao, marque: Add python.exe to PATH
+  echo 1. Abra Configuracoes ^> Aplicativos ^> Configuracoes avancadas de aplicativos
+  echo    ^> Aliases de execucao do aplicativo.
   echo.
-  echo 2. Se o Windows continuar abrindo a Microsoft Store, abra:
-  echo    Configuracoes ^> Aplicativos ^> Configuracoes avancadas de aplicativos
-  echo    ^> Aliases de execucao do aplicativo
-  echo.
-  echo 3. Desative os aliases:
+  echo 2. Desative os aliases:
   echo       python.exe
   echo       python3.exe
   echo.
-  echo 4. Depois abra uma nova janela e teste:
+  echo 3. Feche TODAS as janelas do Terminal/Prompt e abra uma nova.
+  echo.
+  echo 4. Teste:
   echo       py --version
   echo    ou:
   echo       python --version
   echo.
-  echo 5. Quando aparecer Python 3.10 ou superior, execute novamente:
-  echo       CONFIGURAR-PJE-CHATGPT.bat
+  echo 5. Se ainda falhar, reinstale o Python 3.12 pelo instalador oficial
+  echo    e marque: Add python.exe to PATH.
   echo.
   pause
   exit /b 1
@@ -116,10 +161,6 @@ echo ============================================================
 echo   MCP PJe-TJCE - CONFIGURACAO AUTOMATICA PARA WINDOWS
 echo ============================================================
 echo.
-echo Este assistente prepara o servidor local MCP em modo somente leitura.
-echo Ele NAO altera politicas do Windows e NAO instala o Secure MCP Tunnel.
-echo.
-
 echo [1/6] Python encontrado:
 %PYTHON_CMD% --version
 if errorlevel 1 (
