@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+VERSION = "0.2.0"
 TRIBUNAL = "TJCE"
 MCP_NAME = "pje-tjce"
 KEYRING_SERVICE = "mcp-pje-tjce"
@@ -23,6 +24,10 @@ WARMUP = os.getenv("PJE_WARMUP", "0") == "1"
 IDLE_TIMEOUT_SECONDS = int(os.getenv("PJE_IDLE_TIMEOUT", "300"))
 PROFILE_HINT = os.getenv("PJE_TJCE_PROFILE_HINT", "").strip()
 DOWNLOAD_ROOT = Path(os.getenv("PJE_TJCE_DOWNLOAD_ROOT", str(Path.home() / "PJe TJCE"))).expanduser()
+
+MCP_HOST = os.getenv("MCP_HOST", "127.0.0.1")
+MCP_PORT = int(os.getenv("MCP_PORT", "8000"))
+MCP_JSON_RESPONSE = os.getenv("MCP_JSON_RESPONSE", "1") == "1"
 
 
 def normalize_grau(grau: str | None) -> str:
