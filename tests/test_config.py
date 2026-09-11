@@ -1,8 +1,16 @@
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from config import CLIENT_IDS, URL_BASES, normalize_grau
+from config import (
+    CLIENT_IDS,
+    MCP_HOST,
+    MCP_PORT,
+    URL_BASES,
+    VERSION,
+    normalize_grau,
+)
 
 
 def test_urls_tjce():
@@ -15,3 +23,9 @@ def test_urls_tjce():
 def test_grau():
     assert normalize_grau("1") == "1g"
     assert normalize_grau("2") == "2g"
+
+
+def test_remote_defaults():
+    assert VERSION == "0.2.0"
+    assert MCP_HOST == "127.0.0.1"
+    assert MCP_PORT == 8000
