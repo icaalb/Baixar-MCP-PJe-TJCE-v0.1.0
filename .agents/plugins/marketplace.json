@@ -1,0 +1,20 @@
+{
+  "name": "jurisia-local",
+  "interface": {
+    "displayName": "JurisIA Local"
+  },
+  "plugins": [
+    {
+      "name": "pje-tjce",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pje-tjce"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
