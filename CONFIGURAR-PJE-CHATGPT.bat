@@ -24,7 +24,6 @@ if not defined PYTHON_CMD (
   )
 )
 
-rem Procurar caminhos comuns
 if not defined PYTHON_CMD (
   for %%P in (
     "%LocalAppData%\Programs\Python\Python313\python.exe"
@@ -43,7 +42,6 @@ if not defined PYTHON_CMD (
   )
 )
 
-rem Procurar no Registro do Windows (HKCU/HKLM, 64 e 32 bits)
 if not defined PYTHON_CMD (
   for %%K in (
     "HKCU\Software\Python\PythonCore\3.13\InstallPath"
@@ -70,10 +68,6 @@ if not defined PYTHON_CMD (
     )
   )
 )
-
-rem ============================================================
-rem Se Python nao existir, tentar winget / reparar instalacao registrada
-rem ============================================================
 
 if not defined PYTHON_CMD (
   cls
@@ -115,7 +109,6 @@ if not defined PYTHON_CMD (
       )
     )
 
-    rem Redetectar apos instalar/reparar
     if exist "%LocalAppData%\Programs\Python\Python312\python.exe" (
       "%LocalAppData%\Programs\Python\Python312\python.exe" -c "import sys; print(sys.executable)" >nul 2>nul
       if not errorlevel 1 set "PYTHON_CMD="%LocalAppData%\Programs\Python\Python312\python.exe""
@@ -145,16 +138,9 @@ if not defined PYTHON_CMD (
   echo    ou:
   echo       python --version
   echo.
-  echo 5. Se ainda falhar, reinstale o Python 3.12 pelo instalador oficial
-  echo    e marque: Add python.exe to PATH.
-  echo.
   pause
   exit /b 1
 )
-
-rem ============================================================
-rem Configuracao do MCP
-rem ============================================================
 
 echo.
 echo ============================================================
@@ -190,7 +176,16 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-".venv\Scripts\python.exe" -m pip install -r requirements.txt
+
+echo Corrigindo compatibilidade do SDK MCP...
+".venv\Scripts\python.exe" -m pip install --upgrade --force-reinstall "mcp>=1.12.0,<2"
+if errorlevel 1 (
+  echo [ERRO] Falha ao instalar uma versao compativel do MCP SDK.
+  pause
+  exit /b 1
+)
+
+".venv\Scripts\python.exe" -m pip install --upgrade -r requirements.txt
 if errorlevel 1 (
   echo [ERRO] Falha ao instalar as dependencias.
   pause
