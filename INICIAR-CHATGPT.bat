@@ -1,13 +1,13 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title MCP PJe-TJCE para ChatGPT
+title MCP PJe-TJCE v0.3.0 para ChatGPT
 
 if not exist ".venv\Scripts\python.exe" (
   echo Primeira execucao detectada.
-  echo Vou abrir a configuracao automatica antes de iniciar o MCP.
+  echo Vou abrir a configuracao v0.3.0 antes de iniciar o MCP.
   echo.
-  call "CONFIGURAR-PJE-CHATGPT.bat"
+  call "CONFIGURAR-V3.bat"
   if errorlevel 1 (
     echo.
     echo [ERRO] A configuracao nao foi concluida.
@@ -23,14 +23,17 @@ if "%MCP_PORT%"=="" set MCP_PORT=8000
 if "%MCP_JSON_RESPONSE%"=="" set MCP_JSON_RESPONSE=1
 
 echo ============================================================
-echo   MCP PJe-TJCE - SERVIDOR LOCAL PARA CHATGPT
-echo ============================================================
+echo   MCP PJe-TJCE v0.3.0 - SERVIDOR LOCAL PARA CHATGPT
+ echo ============================================================
 echo.
 echo Endpoint MCP local:
 echo   http://%MCP_HOST%:%MCP_PORT%/mcp
+echo Health:
+echo   http://%MCP_HOST%:%MCP_PORT%/health
 echo.
+echo A autenticacao no PJe e concluida manualmente no navegador.
+echo Nenhum seed TOTP e armazenado pelo projeto.
 echo Mantenha esta janela aberta enquanto usar o plugin.
-echo No ChatGPT, use a opcao TUNEL para conectar este servidor local.
 echo.
 echo Para encerrar: feche esta janela ou pressione Ctrl+C.
 echo ============================================================
@@ -41,7 +44,7 @@ echo.
 if errorlevel 1 (
   echo.
   echo [ERRO] O servidor MCP foi encerrado com erro.
-  echo Envie uma captura desta tela para diagnostico.
+  echo Execute DIAGNOSTICAR.bat para gerar um relatorio.
   pause
 )
 
