@@ -7,17 +7,8 @@ from datetime import datetime, timezone
 from mcp.server.fastmcp import FastMCP
 from starlette.responses import JSONResponse
 
-import cliente_singleton
-from config import (
-    MCP_HOST,
-    MCP_JSON_RESPONSE,
-    MCP_NAME,
-    MCP_PORT,
-    TRIBUNAL,
-    VERSION,
-    WARMUP,
-    normalize_grau,
-)
+import cliente_singleton_v3 as cliente_singleton
+from config import MCP_HOST, MCP_JSON_RESPONSE, MCP_NAME, MCP_PORT, TRIBUNAL, VERSION, WARMUP, normalize_grau
 
 
 async def _watchdog() -> None:
@@ -42,8 +33,6 @@ async def lifespan(_server):
         await cliente_singleton.close_client()
 
 
-# No MCP SDK 1.x, host/port/json_response pertencem às configurações do FastMCP,
-# não aos argumentos de run(). Mantemos o bind local para uso por túnel seguro.
 mcp = FastMCP(
     MCP_NAME,
     lifespan=lifespan,
@@ -63,7 +52,6 @@ def _meta(payload: dict, grau: str) -> dict:
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health_http(_request):
-    """Health check HTTP sem abrir sessão no PJe."""
     return JSONResponse(
         {
             "ok": True,
@@ -78,42 +66,42 @@ async def health_http(_request):
 
 @mcp.tool()
 async def status_pje(grau: str = "2g") -> dict:
-    """Verifica sessão autenticada e conectividade com o PJe-TJCE."""
     client = await cliente_singleton.get_client(grau)
     return _meta(await client.health(), grau)
 
 
 @mcp.tool()
 async def consultar_processo(numero_cnj: str, grau: str = "2g") -> dict:
-    """Consulta um processo no PJe-TJCE pelo número CNJ. Somente leitura."""
     client = await cliente_singleton.get_client(grau)
     return _meta(await client.consultar_processo(numero_cnj), grau)
 
 
 @mcp.tool()
 async def ultimas_movimentacoes(numero_cnj: str, limite: int = 10, grau: str = "2g") -> dict:
-    """Obtém movimentações candidatas do processo, sem praticar qualquer ato."""
     client = await cliente_singleton.get_client(grau)
     return _meta(await client.ultimas_movimentacoes(numero_cnj, limite), grau)
 
 
 @mcp.tool()
 async def listar_documentos(numero_cnj: str, grau: str = "2g") -> dict:
-    """Lista links candidatos a documentos/autos encontrados no processo."""
     client = await cliente_singleton.get_client(grau)
     return _meta(await client.listar_documentos(numero_cnj), grau)
 
 
 @mcp.tool()
+async def preparar_processo_para_analise(numero_cnj: str, grau: str = "2g") -> dict:
+    client = await cliente_singleton.get_client(grau)
+    return _meta(await client.preparar_processo_para_analise(numero_cnj), grau)
+
+
+@mcp.tool()
 async def ler_documento(url: str, grau: str = "2g") -> dict:
-    """Extrai texto de um documento do domínio pje.tjce.jus.br previamente localizado."""
     client = await cliente_singleton.get_client(grau)
     return _meta(await client.ler_url_documento(url), grau)
 
 
 @mcp.tool()
 async def encerrar_sessao() -> dict:
-    """Encerra imediatamente a sessão local do navegador usada pelo MCP."""
     await cliente_singleton.close_client()
     return {"ok": True, "tribunal": TRIBUNAL, "versao": VERSION}
 
