@@ -1,19 +1,11 @@
-from getpass import getpass
-from pathlib import Path
-import sys
-
-sys.path.insert(0, str(Path(__file__).parent / "src"))
-from security import save_credentials
+from __future__ import annotations
 
 
 def main() -> None:
-    print("Configuração segura do MCP PJe-TJCE")
-    print("As credenciais serão gravadas no cofre de credenciais do sistema operacional.")
-    cpf = input("CPF: ").strip()
-    senha = getpass("Senha PDPJ/PJe: ")
-    seed = getpass("Seed TOTP (Base32): ")
-    save_credentials(cpf, senha, seed)
-    print("Credenciais armazenadas com sucesso.")
+    print("MCP PJe-TJCE v0.3.0")
+    print("A autenticação agora é manual no navegador.")
+    print("Nenhuma credencial ou chave de segundo fator é armazenada pelo projeto.")
+    print("Execute INICIAR-CHATGPT.bat e conclua o acesso ao PJe na janela que abrir.")
 
 
 if __name__ == "__main__":
