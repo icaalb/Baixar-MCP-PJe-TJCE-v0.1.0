@@ -5,8 +5,7 @@ import time
 from typing import Optional
 
 from config import HEADLESS, IDLE_TIMEOUT_SECONDS, normalize_grau
-from pje_client import Credentials, PJeClient
-from security import load_credentials
+from pje_client import PJeClient
 
 _client: Optional[PJeClient] = None
 _active_grau: Optional[str] = None
@@ -19,17 +18,18 @@ async def get_client(grau: str = "2g") -> PJeClient:
     g = normalize_grau(grau)
     async with _lock:
         now = time.time()
-        alive = bool(_client and _client._browser and _client._browser.is_connected())
+        alive = bool(_client and _client.is_alive())
         if alive and _active_grau == g and now - _last_use < IDLE_TIMEOUT_SECONDS:
             _last_use = now
             return _client  # type: ignore[return-value]
+
         if _client:
             try:
                 await _client.close()
             except Exception:
                 pass
-        cpf, senha, seed = load_credentials()
-        _client = PJeClient(Credentials(cpf, senha, seed), grau=g, headless=HEADLESS)
+
+        _client = PJeClient(grau=g, headless=HEADLESS)
         await _client.start()
         _active_grau = g
         _last_use = now
@@ -49,11 +49,12 @@ async def close_client() -> None:
 
 
 async def close_if_idle() -> bool:
-    global _client, _active_grau
+    global _client, _active_grau, _last_use
     async with _lock:
         if not _client or time.time() - _last_use < IDLE_TIMEOUT_SECONDS:
             return False
         await _client.close()
         _client = None
         _active_grau = None
+        _last_use = 0.0
         return True
