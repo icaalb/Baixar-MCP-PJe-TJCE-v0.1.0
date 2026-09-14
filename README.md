@@ -1,26 +1,32 @@
-# MCP PJe-TJCE — v0.2.0
+# MCP PJe-TJCE — v0.3.0
 
-Servidor MCP experimental e **somente de leitura** para consulta ao Processo Judicial Eletrônico do Tribunal de Justiça do Estado do Ceará (PJe-TJCE), com suporte ao 1º e ao 2º graus.
+Servidor MCP experimental e **somente de leitura** para consulta ao Processo Judicial Eletrônico do Tribunal de Justiça do Estado do Ceará, com suporte ao 1º e ao 2º graus.
 
-A v0.2.0 acrescenta **Streamable HTTP** para conexão remota compatível com clientes MCP, inclusive cenários de integração com ChatGPT por endpoint remoto ou Secure MCP Tunnel.
+A v0.3.0 reorganiza a base para uso mais seguro e previsível no fluxo de análise jurídica: migração para **MCP SDK 2.x**, autenticação **manual no navegador** sem armazenamento de seed TOTP, nova ferramenta `preparar_processo_para_analise`, diagnóstico automático e testes adicionais.
 
-## Estado desta versão
+## Mudanças principais da v0.3.0
 
-A autenticação foi projetada para o SSO nacional do PJe/PDPJ e os endpoints do TJCE estão configurados. Os identificadores observados no redirecionamento oficial são `pje-tjce-1g` e `pje-tjce-2g`.
+- MCP SDK 2.x (`MCPServer`);
+- Streamable HTTP em `/mcp`;
+- nenhuma chave TOTP é solicitada ou armazenada;
+- login/2FA são concluídos manualmente na janela do navegador;
+- novo adaptador `src/pje_client_v3.py`;
+- novo gerenciador de sessão `src/cliente_singleton_v3.py`;
+- nova ferramenta `preparar_processo_para_analise`;
+- `DIAGNOSTICAR.bat` gera relatório local de ambiente;
+- `CONFIGURAR-V3.bat` e `INICIAR-V3.bat` simplificam a instalação e inicialização;
+- limite de corpo de requisição MCP configurável;
+- testes básicos adicionais em `tests/test_v3.py`.
 
-Os seletores internos de consulta, perfil institucional, documentos e movimentações ainda precisam ser validados em uma sessão autenticada real do TJCE antes de uso institucional rotineiro.
+## Segurança
 
-## Princípios de segurança
+O projeto permanece **somente leitura**. Não possui ferramentas de protocolo, assinatura, ciência, movimentação ou alteração processual.
 
-- nenhuma senha, CPF, TOTP, cookie ou certificado é salvo no repositório;
-- credenciais ficam no cofre de credenciais do sistema via `keyring`;
-- cookies permanecem apenas na sessão de navegador;
-- o servidor não possui ferramentas de protocolo, assinatura, ciência, movimentação ou alteração processual;
-- URLs de documentos são aceitas apenas no domínio `pje.tjce.jus.br`;
-- sessão é encerrada automaticamente após inatividade;
-- o servidor remoto local usa `127.0.0.1` por padrão e não deve ser exposto diretamente à internet.
+A v0.3.0 não precisa armazenar CPF, senha nem seed TOTP para automatizar o segundo fator. Quando o PJe solicitar autenticação, o navegador é aberto e o usuário conclui o acesso manualmente. Cookies permanecem apenas na sessão local do navegador.
 
-## Endpoints do PJe-TJCE
+O servidor escuta em `127.0.0.1` por padrão. Não exponha a porta diretamente à internet.
+
+## Endpoints TJCE
 
 | Grau | URL |
 |---|---|
@@ -33,131 +39,102 @@ Os seletores internos de consulta, perfil institucional, documentos e movimenta�
 - `consultar_processo`
 - `ultimas_movimentacoes`
 - `listar_documentos`
+- `preparar_processo_para_analise`
 - `ler_documento`
 - `encerrar_sessao`
 
-## Instalação no Windows
+### `preparar_processo_para_analise`
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m playwright install chromium
-.\.venv\Scripts\python.exe setup_credenciais.py
+Essa ferramenta reúne, de forma preliminar, movimentações e links de documentos e tenta classificá-los em categorias úteis à análise jurídica, como decisão, sentença, acórdão, recurso, contrarrazões e manifestação do Ministério Público.
+
+A classificação é heurística e deve ser conferida antes de uso em relatório ou parecer.
+
+## Instalação recomendada no Windows
+
+Baixe/extrai o repositório em uma pasta nova e execute:
+
+```text
+CONFIGURAR-V3.bat
 ```
 
-## Uso local por stdio
-
-```powershell
-$env:PJE_HEADLESS="0"
-.\.venv\Scripts\python.exe src\server.py
-```
-
-Exemplo genérico de cliente MCP:
-
-```json
-{
-  "mcpServers": {
-    "pje-tjce": {
-      "command": "C:\\CAMINHO\\mcp-pje-tjce\\.venv\\Scripts\\python.exe",
-      "args": ["C:\\CAMINHO\\mcp-pje-tjce\\src\\server.py"]
-    }
-  }
-}
-```
-
-## Uso remoto / ChatGPT
-
-A v0.2.0 inclui `src/remote_server.py`, que publica o MCP por **Streamable HTTP**.
-
-No Windows, basta executar:
+Depois:
 
 ```text
 INICIAR-CHATGPT.bat
 ```
 
-Ou:
+ou:
 
-```powershell
-$env:PJE_HEADLESS="0"
-$env:MCP_HOST="127.0.0.1"
-$env:MCP_PORT="8000"
-.\.venv\Scripts\python.exe src\remote_server.py
+```text
+INICIAR-V3.bat
 ```
 
-Endpoints locais:
+O servidor local ficará disponível em:
 
 ```text
 MCP:    http://127.0.0.1:8000/mcp
 Health: http://127.0.0.1:8000/health
 ```
 
-O ChatGPT não se conecta diretamente a MCP local. Para uso a partir de máquina local/rede privada, utilize o **Secure MCP Tunnel** indicado pela documentação oficial da OpenAI ou outro endpoint remoto protegido e aprovado.
+Quando uma ferramenta precisar abrir o PJe, o Chromium será exibido. Conclua manualmente o login e o segundo fator e mantenha a janela aberta durante a sessão.
 
-Instruções detalhadas: [`docs/CHATGPT.md`](docs/CHATGPT.md).
+## Conexão ao ChatGPT
 
-## Perfil institucional MPCE
+Para uso com plugin/app MCP do ChatGPT, conecte um túnel seguro ao endpoint local:
 
-Não há seleção automática de perfil por padrão. Após validar o texto exato exibido pelo PJe para o perfil institucional, ele poderá ser definido por variável de ambiente:
-
-```powershell
-$env:PJE_TJCE_PROFILE_HINT="texto exato do perfil"
+```text
+http://127.0.0.1:8000/mcp
 ```
 
-A seleção automática somente tentará clicar em elemento cujo texto contenha o valor configurado.
+Não use `127.0.0.1` como URL remota diretamente no ChatGPT.
+
+## Diagnóstico
+
+Em caso de erro, execute:
+
+```text
+DIAGNOSTICAR.bat
+```
+
+Ele gera `diagnostico-pje-tjce.txt` com informações de Python, MCP SDK, Playwright, imports do projeto, porta 8000 e health check local. O relatório não deve conter credenciais.
 
 ## Variáveis de ambiente
-
-Consulte `.env.example`. Principais opções:
 
 ```text
 PJE_HEADLESS=0
 PJE_WARMUP=0
 PJE_TJCE_PROFILE_HINT=
+PJE_IDLE_TIMEOUT=600
+PJE_MANUAL_TOTP_TIMEOUT=180
 MCP_HOST=127.0.0.1
 MCP_PORT=8000
 MCP_JSON_RESPONSE=1
+MCP_MAX_REQUEST_BODY=2097152
 ```
 
-Nunca coloque credenciais do PJe em `.env`.
-
-## Teste inicial recomendado
-
-1. execute `setup_credenciais.py`;
-2. use `PJE_HEADLESS=0`;
-3. inicie `INICIAR-CHATGPT.bat` ou `src/remote_server.py`;
-4. acesse `http://127.0.0.1:8000/health`;
-5. conecte um cliente MCP ao endpoint `/mcp`;
-6. chame `status_pje(grau="2g")`;
-7. valide visualmente o perfil selecionado;
-8. chame `consultar_processo` com um processo permitido ao usuário;
-9. registre qualquer seletor/tela não reconhecido para ajuste do adaptador.
-
-## Arquitetura
+## Estrutura atual
 
 ```text
-ChatGPT / cliente MCP
-        |
-        | HTTPS / Secure MCP Tunnel
-        v
-Streamable HTTP /mcp
-        |
-        v
-FastMCP
-        |
-        v
-Playwright + sessão local
-        |
-        v
-PJe-TJCE 1º/2º grau
+src/
+├── config.py
+├── pje_client_v3.py
+├── cliente_singleton_v3.py
+├── server.py
+└── remote_server.py
+
+tests/
+├── test_config.py
+└── test_v3.py
 ```
 
-## Origem arquitetural
+Os arquivos `pje_client.py`, `cliente_singleton.py` e `security.py` pertencem à geração anterior e permanecem apenas como referência de transição. A execução principal da v0.3.0 utiliza os módulos `*_v3`.
 
-Projeto escrito de forma independente. A arquitetura foi estudada a partir de implementações públicas de MCP para PJe, em especial o repositório `fxbarros/MCP-PJe-TJMA`, sem incorporar credenciais ou dados pessoais e sem presumir compatibilidade de seletores entre tribunais.
+## Limitações atuais
 
-## Limitações
+O PJe é uma aplicação web dinâmica. Os seletores internos ainda precisam ser validados com uma sessão autenticada real do TJCE. A ferramenta `preparar_processo_para_analise` é uma camada inicial de classificação e não substitui conferência documental.
 
-O PJe é uma aplicação web dinâmica e seus seletores podem variar por versão, perfil e tribunal. Scraping de interface não deve ser tratado como API estável. Para implantação institucional, deve-se preferir integração oficial quando TJCE/CNJ disponibilizar endpoint apropriado ao caso de uso.
+A próxima evolução recomendada é observar as chamadas internas da própria interface PJe e, quando tecnicamente e institucionalmente permitido, substituir scraping visual por endpoints autenticados mais estáveis.
 
-A disponibilidade de apps MCP personalizados no ChatGPT depende do plano, das permissões administrativas e das regras atuais do produto OpenAI. Consulte sempre a documentação oficial antes da implantação.
+## Uso institucional
+
+Antes de implantação rotineira, valide o comportamento com perfil autorizado do MPCE, revise as regras internas de segurança e proteção de dados e mantenha o projeto em modo somente leitura.
