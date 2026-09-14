@@ -4,11 +4,11 @@ import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 from starlette.responses import JSONResponse
 
 import cliente_singleton_v3 as cliente_singleton
-from config import MCP_HOST, MCP_JSON_RESPONSE, MCP_NAME, MCP_PORT, TRIBUNAL, VERSION, WARMUP, normalize_grau
+from config import MCP_NAME, TRIBUNAL, VERSION, WARMUP, normalize_grau
 
 
 async def _watchdog() -> None:
@@ -33,13 +33,7 @@ async def lifespan(_server):
         await cliente_singleton.close_client()
 
 
-mcp = FastMCP(
-    MCP_NAME,
-    lifespan=lifespan,
-    host=MCP_HOST,
-    port=MCP_PORT,
-    json_response=MCP_JSON_RESPONSE,
-)
+mcp = MCPServer(MCP_NAME, lifespan=lifespan)
 
 
 def _meta(payload: dict, grau: str) -> dict:
@@ -47,6 +41,7 @@ def _meta(payload: dict, grau: str) -> dict:
     payload["grau"] = "2º grau" if normalize_grau(grau) == "2g" else "1º grau"
     payload["somente_leitura"] = True
     payload["versao"] = VERSION
+    payload["mcp_sdk"] = "2.x"
     return payload
 
 
@@ -59,6 +54,7 @@ async def health_http(_request):
             "tribunal": TRIBUNAL,
             "version": VERSION,
             "read_only": True,
+            "mcp_sdk": "2.x",
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     )
